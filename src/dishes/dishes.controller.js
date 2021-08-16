@@ -53,12 +53,13 @@ function create(req, res, next) {
   res.status(201).json({ data: newDish });
 }
 
-function read(req, res, next) {
+function dishIdExists(req, res, next) {
   const { dishId } = req.params;
   const foundDish = dishes.find((dish) => dish.id === dishId);
-  console.log(foundDish);
+
   if (foundDish) {
-    return res.status(200).json({ data: foundDish });
+    res.locals.foundDish = foundDish;
+    return next();
   }
   next({
     status: 404,
@@ -66,8 +67,12 @@ function read(req, res, next) {
   });
 }
 
+function read(req, res, next) {
+  res.status(200).json({ data: res.locals.foundDish });
+}
+
 module.exports = {
   list,
   create: [hasRequiredFields, priceGreaterThanZero, create],
-  read,
+  read: [dishIdExists, read],
 };
