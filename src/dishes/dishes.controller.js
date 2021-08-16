@@ -1,4 +1,3 @@
-const { restart } = require("nodemon");
 const path = require("path");
 
 // Use the existing dishes data
@@ -12,25 +11,36 @@ function list(req, res, next) {
   res.json({ data: dishes });
 }
 
-function create(req, res, next) {
+function hasRequiredFields(req, res, next) {
   const { data: { name, description, price, image_url } = {} } = req.body;
   const data = req.body.data || {};
-  const requiredFields = [ "name", "description", "price", "image_url"];
-  for ( const field of requiredFields) {
-      if(!data[field]){
-          return next({
-              status: 400,
-              message: `Dish must include a ${field}`,
-          });
-      }
+  const requiredFields = ["name", "description", "price", "image_url"];
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      return next({
+        status: 400,
+        message: `Dish must include a ${field}`,
+      });
+    }
   }
+  next();
+}
+
+function priceGreaterThanZero(req, res, next) {
+  const { data: { price } = {} } = req.body;
 
   if (price < 0) {
-      return next({
-          status: 400,
-          message: "Dish must have a price that is an integer greater than 0",
-      })
+    return next({
+      status: 400,
+      message: "Dish must have a price that is an integer greater than 0",
+    });
   }
+
+  next();
+}
+
+function create(req, res, next) {
+  const { data: { name, description, price, image_url } = {} } = req.body;
 
   const newDish = {
     id: nextId(),
@@ -45,5 +55,5 @@ function create(req, res, next) {
 
 module.exports = {
   list,
-  create,
+  create: [hasRequiredFields, priceGreaterThanZero, create],
 };
