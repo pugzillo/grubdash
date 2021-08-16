@@ -1,3 +1,4 @@
+const { restart } = require("nodemon");
 const path = require("path");
 
 // Use the existing dishes data
@@ -11,6 +12,38 @@ function list(req, res, next) {
   res.json({ data: dishes });
 }
 
+function create(req, res, next) {
+  const { data: { name, description, price, image_url } = {} } = req.body;
+  const data = req.body.data || {};
+  const requiredFields = [ "name", "description", "price", "image_url"];
+  for ( const field of requiredFields) {
+      if(!data[field]){
+          return next({
+              status: 400,
+              message: `Dish must include a ${field}`,
+          });
+      }
+  }
+
+  if (price < 0) {
+      return next({
+          status: 400,
+          message: "Dish must have a price that is an integer greater than 0",
+      })
+  }
+
+  const newDish = {
+    id: nextId(),
+    name,
+    description,
+    price,
+    image_url,
+  };
+  dishes.push(newDish);
+  res.status(201).json({ data: newDish });
+}
+
 module.exports = {
   list,
+  create,
 };
