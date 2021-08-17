@@ -92,6 +92,7 @@ function read(req, res, next) {
 
 function statusIsValid(req, res, next) {
   const { data: { status } = {} } = req.body;
+
   const validStatuses = ["pending", "preparing", "out-for-delivery"];
   if (status == undefined || status === "" || !validStatuses.includes(status)) {
     return next({
@@ -134,16 +135,35 @@ function update(req, res, next) {
   res.json({ data: order });
 }
 
+function statusIsPending(req, res, next) {
+  const order = res.locals.foundOrder;
+  if (order.status === "pending") {
+    return next();
+  }
+  next({
+    status: 400,
+    message: 'An order cannot be deleted unless it is pending'
+  });
+}
+
+function destroy(req, res, next) {
+  const orderId = req.params;
+  const index = orders.findIndex((order) => order.id === orderId);
+  orders.splice(index, 1);
+  res.sendStatus(204);
+}
+
 module.exports = {
   list,
   create: [hasRequiredFields, dishesPropertyIsValid, create],
   read: [orderExists, read],
   update: [
-    hasRequiredFields,
     orderExists,
+    bodyOrderIdRouteOrderIdMatch,
+    hasRequiredFields,
     dishesPropertyIsValid,
     statusIsValid,
-    bodyOrderIdRouteOrderIdMatch,
     update,
   ],
+  destroy: [orderExists, statusIsPending, destroy],
 };

@@ -6,7 +6,8 @@ const controller = require("./orders.controller");
 router
     .route("/:orderId")
     .get(controller.read)
-    .put(controller.update);
+    .put(controller.update)
+    .delete(controller.destroy);
 
 router
     .route("/")
