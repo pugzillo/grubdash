@@ -92,17 +92,17 @@ function read(req, res, next) {
 
 function statusIsValid(req, res, next) {
   const { data: { status } = {} } = req.body;
-  const validStatuses = [
-    "pending",
-    "preparing",
-    "out-for-delivery",
-    "delivered",
-  ];
-  console.log(status);
-  if (status == undefined) {
+  const validStatuses = ["pending", "preparing", "out-for-delivery"];
+  if (status == undefined || status === "" || !validStatuses.includes(status)) {
     return next({
       status: 400,
-      message: "Undefined Status",
+      message:
+        "Order must have a status of pending, preparing, out-for-delivery, delivered",
+    });
+  } else if (status === "delivered") {
+    return next({
+      status: 400,
+      message: "A delivered order cannot be changed",
     });
   }
   next();
@@ -120,8 +120,6 @@ function bodyOrderIdRouteOrderIdMatch(req, res, next) {
   }
   next();
 }
-
-function validStatus 
 
 function update(req, res, next) {
   const order = res.locals.foundOrder;
