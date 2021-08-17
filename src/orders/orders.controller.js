@@ -92,16 +92,36 @@ function read(req, res, next) {
 
 function statusIsValid(req, res, next) {
   const { data: { status } = {} } = req.body;
-  const validStatuses = [ 'pending', 'preparing', 'out-for-delivery', 'delivered']; 
-  console.log(status)
+  const validStatuses = [
+    "pending",
+    "preparing",
+    "out-for-delivery",
+    "delivered",
+  ];
+  console.log(status);
   if (status == undefined) {
-      return next({
-          status: 400,
-          message: 'Undefined Status'
-      }) 
+    return next({
+      status: 400,
+      message: "Undefined Status",
+    });
   }
   next();
 }
+
+function bodyOrderIdRouteOrderIdMatch(req, res, next) {
+  const { orderId } = req.params;
+  const { data: { id } = {} } = req.body;
+
+  if (id && orderId !== id) {
+    return next({
+      status: 400,
+      message: `Order id does not match route id. Order: ${id}, Route: ${orderId}.`,
+    });
+  }
+  next();
+}
+
+function validStatus 
 
 function update(req, res, next) {
   const order = res.locals.foundOrder;
@@ -125,6 +145,7 @@ module.exports = {
     orderExists,
     dishesPropertyIsValid,
     statusIsValid,
+    bodyOrderIdRouteOrderIdMatch,
     update,
   ],
 };
