@@ -90,8 +90,41 @@ function read(req, res, next) {
   res.json({ data: res.locals.foundOrder });
 }
 
+function statusIsValid(req, res, next) {
+  const { data: { status } = {} } = req.body;
+  const validStatuses = [ 'pending', 'preparing', 'out-for-delivery', 'delivered']; 
+  console.log(status)
+  if (status == undefined) {
+      return next({
+          status: 400,
+          message: 'Undefined Status'
+      }) 
+  }
+  next();
+}
+
+function update(req, res, next) {
+  const order = res.locals.foundOrder;
+  const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+
+  // update the profile
+  order.deliverTo = deliverTo;
+  order.mobileNumber = mobileNumber;
+  order.status = status;
+  order.dishes = dishes;
+
+  res.json({ data: order });
+}
+
 module.exports = {
   list,
   create: [hasRequiredFields, dishesPropertyIsValid, create],
   read: [orderExists, read],
+  update: [
+    hasRequiredFields,
+    orderExists,
+    dishesPropertyIsValid,
+    statusIsValid,
+    update,
+  ],
 };

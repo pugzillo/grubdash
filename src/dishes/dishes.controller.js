@@ -41,6 +41,7 @@ function priceGreaterThanZero(req, res, next) {
 
 function priceIsANumber(req, res, next) {
   const { data: { price } = {} } = req.body;
+
   if (typeof(price) !== "number") {
     return next({
       status: 400,
@@ -128,4 +129,5 @@ module.exports = {
     BodyIdRouteIdMatch,
     update,
   ],
+  dishIdExists,
 };
