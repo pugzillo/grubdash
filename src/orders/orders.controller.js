@@ -6,11 +6,7 @@ const orders = require(path.resolve("src/data/orders-data"));
 // Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
 
-// TODO: Implement the /orders handlers needed to make the tests pass
-function list(req, res, next) {
-  res.json({ data: orders });
-}
-
+// Middleware functions
 function hasRequiredFields(req, res, next) {
   const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
   const data = req.body.data || {};
@@ -27,13 +23,10 @@ function hasRequiredFields(req, res, next) {
 }
 
 function dishesPropertyIsValid(req, res, next) {
-  const {
-    data: { dishes },
-  } = req.body;
-  // Checks the dishes property
+  const { data: { dishes } = {} } = req.body;
+  // Checks if dishes
   if (
     (Array.isArray(dishes) && !dishes.length) ||
-    // (Array.isArray(dishes) && dishes.length === 0) ||
     !Array.isArray(dishes) ||
     dishes === undefined
   ) {
@@ -60,19 +53,6 @@ function dishesPropertyIsValid(req, res, next) {
   next();
 }
 
-function create(req, res, next) {
-  const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
-  const newOrder = {
-    id: nextId(),
-    deliverTo,
-    mobileNumber,
-    status,
-    dishes,
-  };
-  orders.push(newOrder);
-  res.status(201).json({ data: newOrder });
-}
-
 function orderExists(req, res, next) {
   const { orderId } = req.params;
   const foundOrder = orders.find((order) => order.id === orderId);
@@ -84,10 +64,6 @@ function orderExists(req, res, next) {
     status: 404,
     message: `Order doesn't exist: ${orderId}`,
   });
-}
-
-function read(req, res, next) {
-  res.json({ data: res.locals.foundOrder });
 }
 
 function statusIsValid(req, res, next) {
@@ -122,6 +98,39 @@ function bodyOrderIdRouteOrderIdMatch(req, res, next) {
   next();
 }
 
+function statusIsPending(req, res, next) {
+  const order = res.locals.foundOrder;
+  if (order.status === "pending") {
+    return next();
+  }
+  next({
+    status: 400,
+    message: "An order cannot be deleted unless it is pending",
+  });
+}
+
+// Handlers
+function list(req, res, next) {
+  res.json({ data: orders });
+}
+
+function create(req, res, next) {
+  const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+  const newOrder = {
+    id: nextId(),
+    deliverTo,
+    mobileNumber,
+    status,
+    dishes,
+  };
+  orders.push(newOrder);
+  res.status(201).json({ data: newOrder });
+}
+
+function read(req, res, next) {
+  res.json({ data: res.locals.foundOrder });
+}
+
 function update(req, res, next) {
   const order = res.locals.foundOrder;
   const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
@@ -133,17 +142,6 @@ function update(req, res, next) {
   order.dishes = dishes;
 
   res.json({ data: order });
-}
-
-function statusIsPending(req, res, next) {
-  const order = res.locals.foundOrder;
-  if (order.status === "pending") {
-    return next();
-  }
-  next({
-    status: 400,
-    message: 'An order cannot be deleted unless it is pending'
-  });
 }
 
 function destroy(req, res, next) {
