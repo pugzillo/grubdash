@@ -6,7 +6,7 @@ const orders = require(path.resolve("src/data/orders-data"));
 // Use this function to assigh ID's when necessary
 const nextId = require("../utils/nextId");
 
-// Middleware functions
+// Middleware functions for validation
 function hasRequiredFields(req, res, next) {
   const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
   const data = req.body.data || {};
@@ -24,7 +24,7 @@ function hasRequiredFields(req, res, next) {
 
 function dishesPropertyIsValid(req, res, next) {
   const { data: { dishes } = {} } = req.body;
-  // Checks if dishes
+  // Checks if dishes exists and is defined
   if (
     (Array.isArray(dishes) && !dishes.length) ||
     !Array.isArray(dishes) ||
@@ -35,7 +35,7 @@ function dishesPropertyIsValid(req, res, next) {
       message: "dish",
     });
   }
-  // Checks the quantity property of dishes property
+  // Checks the quantity property of dishes
   for (let index = 0; index < dishes.length; index++) {
     const dish = dishes[index];
 
@@ -55,9 +55,9 @@ function dishesPropertyIsValid(req, res, next) {
 
 function orderExists(req, res, next) {
   const { orderId } = req.params;
-  const foundOrder = orders.find((order) => order.id === orderId);
+  const foundOrder = orders.find((order) => order.id === orderId); // find input order in orders
   if (foundOrder) {
-    res.locals.foundOrder = foundOrder;
+    res.locals.foundOrder = foundOrder; // set foundOrder to local variable
     return next();
   }
   next({
@@ -68,7 +68,6 @@ function orderExists(req, res, next) {
 
 function statusIsValid(req, res, next) {
   const { data: { status } = {} } = req.body;
-
   const validStatuses = ["pending", "preparing", "out-for-delivery"];
   if (status == undefined || status === "" || !validStatuses.includes(status)) {
     return next({
@@ -85,10 +84,10 @@ function statusIsValid(req, res, next) {
   next();
 }
 
+// Checks if order Id in route and request body match
 function bodyOrderIdRouteOrderIdMatch(req, res, next) {
   const { orderId } = req.params;
   const { data: { id } = {} } = req.body;
-
   if (id && orderId !== id) {
     return next({
       status: 400,
@@ -98,6 +97,7 @@ function bodyOrderIdRouteOrderIdMatch(req, res, next) {
   next();
 }
 
+// Only pending orders can be deleted
 function statusIsPending(req, res, next) {
   const order = res.locals.foundOrder;
   if (order.status === "pending") {
@@ -146,7 +146,7 @@ function update(req, res, next) {
 
 function destroy(req, res, next) {
   const orderId = req.params;
-  const index = orders.findIndex((order) => order.id === orderId);
+  const index = orders.findIndex((order) => order.id === orderId); // find index of order to be deleted
   orders.splice(index, 1);
   res.sendStatus(204);
 }
