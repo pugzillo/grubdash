@@ -6,9 +6,24 @@ const dishes = require(path.resolve("src/data/dishes-data"));
 // Use this function to assign ID's when necessary
 const nextId = require("../utils/nextId");
 
-// TODO: Implement the /dishes handlers needed to make the tests pass
-function list(req, res, next) {
-  res.json({ data: dishes });
+// Validation functions
+
+// Checks if the dish Id in route and body match
+function BodyIdRouteIdMatch(req, res, next) {
+  const { dishId } = req.params; // route id
+  const { data: { id } = {} } = req.body; // body id
+
+  if (dishId && id) {
+    if (dishId === id) {
+      return next();
+    }
+
+    next({
+      status: 400,
+      message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
+    });
+  }
+  next();
 }
 
 function hasRequiredFields(req, res, next) {
@@ -28,21 +43,18 @@ function hasRequiredFields(req, res, next) {
 
 function priceGreaterThanZero(req, res, next) {
   const { data: { price } = {} } = req.body;
-
   if (price <= 0) {
     return next({
       status: 400,
       message: "Dish must have a price that is an integer greater than 0",
     });
   }
-
   next();
 }
 
 function priceIsANumber(req, res, next) {
   const { data: { price } = {} } = req.body;
-
-  if (typeof(price) !== "number") {
+  if (typeof price !== "number") { // price must be a number
     return next({
       status: 400,
       message: "Dish price is not a number",
@@ -51,26 +63,11 @@ function priceIsANumber(req, res, next) {
   next();
 }
 
-function create(req, res, next) {
-  const { data: { name, description, price, image_url } = {} } = req.body;
-
-  const newDish = {
-    id: nextId(),
-    name,
-    description,
-    price,
-    image_url,
-  };
-  dishes.push(newDish);
-  res.status(201).json({ data: newDish });
-}
-
 function dishIdExists(req, res, next) {
   const { dishId } = req.params;
   const foundDish = dishes.find((dish) => dish.id === dishId);
-
   if (foundDish) {
-    res.locals.foundDish = foundDish;
+    res.locals.foundDish = foundDish; // local variable for all functions
     return next();
   }
   next({
@@ -79,33 +76,36 @@ function dishIdExists(req, res, next) {
   });
 }
 
-function read(req, res, next) {
-  res.status(200).json({ data: res.locals.foundDish });
+// Handlers
+
+// sends back all dishes
+function list(req, res, next) {
+  res.json({ data: dishes });
 }
 
-function BodyIdRouteIdMatch(req, res, next) {
-  const { dishId } = req.params; // route id
-  const { data: { id } = {} } = req.body; // body id
+// get new dish
+function create(req, res, next) {
+  const { data: { name, description, price, image_url } = {} } = req.body;
+  const newDish = {
+    id: nextId(),
+    name,
+    description,
+    price,
+    image_url,
+  };
+  dishes.push(newDish); // add new dish
+  res.status(201).json({ data: newDish });
+}
 
-  if (dishId && id) {
-    if (dishId === id) {
-      return next();
-    }
-
-    next({
-      status: 400,
-      message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`,
-    });
-  }
-  next();
+// send back specific dish
+function read(req, res, next) {
+  res.status(200).json({ data: res.locals.foundDish });
 }
 
 function update(req, res, next) {
   const { data: { id, name, description, price, image_url } = {} } = req.body; // input
   const data = req.body.data || {};
-
   const dish = res.locals.foundDish; // original dish info
-
   const requiredFields = ["name", "description", "price", "image_url"];
 
   for (const field of requiredFields) {
