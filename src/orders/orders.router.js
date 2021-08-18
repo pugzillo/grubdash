@@ -1,17 +1,20 @@
 const router = require("express").Router();
 const controller = require("./orders.controller");
+const methodNotAllowed = require("../errors/methodNotAllowed");
 
 // router: /orders/:orderId
 router
     .route("/:orderId")
     .get(controller.read)
     .put(controller.update)
-    .delete(controller.destroy);
+    .delete(controller.destroy)
+    .all(methodNotAllowed);
 
 // router: /orders
 router
     .route("/")
     .get(controller.list)
-    .post(controller.create);
+    .post(controller.create)
+    .all(methodNotAllowed);
 
 module.exports = router;
